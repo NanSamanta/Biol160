@@ -1,0 +1,32 @@
+---
+title: "Module1_Part6"
+author: "Nandini Samanta"
+date: "2/20/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('tidyverse')
+```
+
+```{r}
+iris <- read_csv("/Users/nandini_samanta/Documents/Everything/School/Senior Year/Spring Semester/BIOL 160/iris.data", 
+                 col_names=c("sepal_length", "sepal_width", "petal_length",
+                             "petal_width", "species"))
+
+head(iris, n=5)
+dim(iris)
+# 5 attributes, 750 observations (150*5)
+
+arr = as.array(unlist(iris["petal_length"]), dim = c(150,1))
+print(arr)
+
+which(is.na(arr)) # no missing values 
+
+iris$NumericSpeciesClassification = iris$petal_length
+
+iris$PetalLengthClassification = ifelse(iris$petal_length<3,
+                                        "Short", "Long")
+```
+

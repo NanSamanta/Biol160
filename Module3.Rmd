@@ -1,0 +1,141 @@
+---
+title: "Module3Bio160"
+author: "Nandini Samanta"
+date: "3/28/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+#install.packages("scatterplot3d")
+library(scatterplot3d)
+library(DataExplorer)
+library(knitr)
+mod3 <- read.csv("/Users/nandini_samanta/Documents/Everything/School/Senior Year/Spring Semester/BIOL 160/module3.csv")
+```
+
+## Scatterplot 
+```{r}
+#str(mod3)
+scatterplot3d(mod3[,1:3], 
+              main="3D Scatter Plot", 
+              xlab="Var1", ylab = "Var2", zlab = "Var3")
+```
+
+## Histogram 
+```{r}
+hist(mod3$X0.127624925, main = "Histogram of Var3", xlab = "Var3")
+```
+
+## Line Graph 
+```{r}
+plot(mod3$X0.195765835, type = "l", col="blue", ylim=c(0, 0.3))
+lines(mod3$X0.209651153, type="l", col="red")
+lines(mod3$X0.127624925, type="l", col="black")
+legend(0, 0.1, legend=c("Var1", "Var2", "Var3"), col=c("blue", "red", "black"), 
+       lty=1:3)
+```
+
+
+
+# Data Visualization and Analysis on a dataset 
+```{r}
+# Q1-Q3
+data("iris")
+str(iris)
+length(which(is.na(iris)))
+sapply(iris, summary)
+summary(iris)
+
+# Q4
+ggplot(iris, aes(x=Species))+
+  geom_boxplot(aes(y=Sepal.Length))
+ggplot(iris, aes(x=Species))+
+  geom_boxplot(aes(y=Sepal.Width))
+ggplot(iris, aes(x=Species))+
+  geom_boxplot(aes(y=Petal.Length))
+ggplot(iris, aes(x=Species))+
+  geom_boxplot(aes(y=Petal.Width))
+# yes, there are outliers 
+
+# 5
+ggplot(iris)+
+  geom_histogram(aes(x=Sepal.Length))
+ggplot(iris)+
+  geom_histogram(aes(x=Sepal.Width))
+ggplot(iris)+
+  geom_histogram(aes(x=Petal.Length))
+ggplot(iris)+
+  geom_histogram(aes(x=Petal.Width))
+# There are gaps in sepal length, petal length and petal width; 
+# none of the graphs appears normally distributed
+
+# 6;
+plot_qq(iris, by="Species")
+
+#7 
+cor(iris[,-5])
+# Petal length and Speal length are highly correlated (r>0.7)
+# Petal length and Petal width, and ptal length and sepal length 
+
+#8 
+t.test(iris$Sepal.Length)
+t.test(iris$Sepal.Length, mu=4)
+
+iris.new <-  iris %>% filter(Species != "virginica")
+var.test(Petal.Length~ Species, data=iris.new) 
+
+t.test(Petal.Length ~ Species, data=iris.new, conf.level=0.99)
+
+lm.iris1 <- lm(Petal.Width~Species, data=iris)
+anova(lm.iris1)
+
+# 9 
+iris %>% group_by(Species) %>% summarise(max=max(Petal.Width))
+
+# 10 
+iris %>% group_by(Species) %>% summarise(med=median(Petal.Width))
+
+# 11
+ggplot(iris) + geom_point(aes(x=Petal.Length, y=Petal.Width))
+# there seems to be a linear trend and positive correlation between the two 
+# if petal length=2.5, I would expect petal width =0.75
+```
+
+# Data Visualization and Analysis on a dataset 2
+
+```{r}
+cleave.data <- read.csv("/Users/nandini_samanta/Documents/Everything/School/Senior Year/Spring Semester/BIOL 160/processed.cleveland (1).data", header = F)
+str(cleave.data)
+length(which(is.na(cleave.data)))
+sapply(cleave.data, summary)
+
+# 3 
+hist(cleave.data$V10) #right skewed; 
+# take roots, or logs, or reciprocals to adjust right skew 
+
+cleave.data$age.group <- ifelse(cleave.data$V1 >=20 &cleave.data$V1<=30, "20-30", ifelse(cleave.data$V1 >30 &cleave.data$V1<=40, "31-40", ifelse(cleave.data$V1 >40 & cleave.data$V1<=50, "41-50", ifelse(cleave.data$V1 >50 & cleave.data$V1<=60, "51-60", ifelse(cleave.data$V1 >60 & cleave.data$V1<=70, "61-70", ifelse(cleave.data$V1 >70 & cleave.data$V1<=80, "71-80", "other"))))))
+
+tab1 <- cleave.data %>% group_by(age.group, V3) %>% summarise()
+kable(addmargins(table(cleave.data$age.group, cleave.data$V3)))
+
+chisq.test(cleave.data$V1, cleave.data$V3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

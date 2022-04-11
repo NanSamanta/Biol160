@@ -1,0 +1,145 @@
+---
+title: "Module4"
+author: "Nandini Samanta"
+date: "3/29/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(caret)
+library(repr)
+library(glmnet)
+library(remotes)
+```
+
+# Warm Up 
+1. What is linear regression machine learning? Linear regression is a method used to understand the relationship between input variables and an output variable. In machine learning, the linear regression model can be extended to predict outputs for a certain input. 
+
+2. What are Lasso and Ridge regression? The ridge regression constrains a given coefficient to make it regularized to reduce the complexity of the model. The lasso regression helps reduce overfitting in the model. 
+
+3. Give an example of one-hot coding? If there were 4 car companies, then each of those companies would be given a numeric value so that they could be used in a multi-linear regression model. 
+
+4. What are R-squared and RMSE? Both of these values allow us to evaluate how well a model fits to our data. RMSE is used to determine model fit for a prediction for a value in the terms the data is in, while R^2 is used to as a precentage measure. 
+
+5. Logistic Regression, SVM, KNN, and LDA all use data to create a model that can predict the location of a new data point.
+
+6. What is k-fold cross validation? This is when you separate the data into distinct portions that are used to train and test your data. The k-fold cross validation comes in when you use portions of the data to estimate the skill of the model on data it hasn't seen before. 
+
+7. Name 3 components of Neural Networks. Input layer, processing layer, and output layer. 
+
+## Regression
+
+```{r}
+insurance <- read.csv("/Users/nandini_samanta/Documents/Everything/School/Senior Year/Spring Semester/BIOL 160/insurance.csv")
+str(insurance) # 1338 observations, 7 variables 
+length(which(is.na(insurance))) # 6 NAs 
+lapply(insurance, summary)
+```
+
+```{r}
+hist(insurance$charges)
+# I would do a log transformation 
+
+# changing categorical variables into one-hot coding 
+insurance$smoker <- ifelse(insurance$smoker == "yes", 1, 0)
+insurance$sex <- ifelse(insurance$sex == "female", 1, 0)
+insurance$region <- ifelse(insurance$region=="southwest", 3, 
+                            ifelse(insurance$region == "southeast", 2, 
+                                   ifelse(insurance$region =="northwest", 1, 0)))
+insurance1 <- insurance %>% select(-c("smoker", "sex", "region"))
+
+cor(insurance1, use="complete.obs")
+insurance1 <- (na.omit(insurance1))
+# age and charges are also low-moderately correlated, charges and smoker are also correlated
+```
+
+### Splitting the Data 
+```{r}
+set.seed(12345)
+# splitting the data 
+index = sample(1:nrow(insurance1), 0.7*nrow(insurance1) )
+train.data = insurance1[index, ]
+test.data = insurance1[-index, ]
+
+# scaling the data
+pre_proc_vals <- preProcess(train.data[,], method = c("center", "scale"))
+train.data[,] = predict(pre_proc_vals, train.data[,])
+test.data[,] = predict(pre_proc_vals, test.data[,])
+
+
+# Linear regression predicting charges
+lr <- lm(charges~., data = train.data)
+summary(lr)
+predictions.lr <- predict(lr, newdata = test.data)
+
+# Ridge regression predicting charges
+reg.vars <- dummyVars(charges~., data=insurance1[,])
+train2 = predict(reg.vars, newdata = train.data[,])
+test2 = predict(reg.vars, newdata = test.data[,])
+
+x = as.matrix(train2)
+y.train = train.data$charges
+
+x.test = as.matrix(test2)
+y.test = test.data$charges
+
+rr <- glmnet(x, y.train, alpha = 0)
+summary(rr)
+# lasso regression predicting charges
+sr <- cv.glmnet(x, y.train, alpha=1)
+predictions.sr <- predict(sr, newx = x.test)
+summary(sr)
+
+# comparing three models on prediction values
+# creating a function to compare results 
+eval_results <- function(true, predicted, df) {
+  SSE <- sum((predicted - true)^2)
+  SST <- sum((true - mean(true))^2)
+  R_square <- 1 - SSE / SST
+  RMSE = sqrt(SSE/nrow(df))
+
+  
+  # Model performance metrics
+data.frame(
+  RMSE = RMSE,
+  Rsquare = R_square
+)
+  
+}
+
+eval_metrics = function(model, df, predictions, target){
+    resids = df[,target] - predictions
+    resids2 = resids**2
+    N = length(predictions)
+    r2 = as.character(round(summary(model)$r.squared, 2))
+    adj_r2 = as.character(round(summary(model)$adj.r.squared, 2))
+    print(adj_r2) #Adjusted R-squared
+    print(as.character(round(sqrt(sum(resids2)/N), 2))) #RMSE
+}
+
+# comparing RMSE and R^2 for linear regression 
+eval_metrics(lr, test.data, predictions.lr, target='charges')
+
+# comparing metrics for ridge regression 
+eval_results(y.test, predictions.sr, test.data)
+
+
+# comparing metrics for lasso regression 
+# lasso model 
+predictions.test <- predict(lr, newx = x.test)
+eval_results(y.test, predictions.test, test.data)
+```
+
+
+
+
+
+
+
+
+
+
+
